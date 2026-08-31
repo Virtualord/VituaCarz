@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Phone number is required"],
     },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

@@ -1,5 +1,6 @@
 import express from "express"
-import { login, register } from "../controllers/userController.js"
+import { login, register, updateUser } from "../controllers/userController.js"
+import { userAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -8,5 +9,8 @@ router.post("/register", register);
 
 // Login || POST
 router.post("/login", login);
+
+// Update || PATCH
+router.patch("/update/:id", userAuth, updateUser)
 
 export default router;

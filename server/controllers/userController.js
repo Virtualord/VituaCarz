@@ -110,3 +110,36 @@ export const login = async (req, res) => {
     })
   }
 }
+
+// Update User 
+export const updateUser = async (req, res) => {
+  try {
+    const {id} = req.params
+    if (!id) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found"
+      })
+    }
+    const data = req.body;
+    const user = await userModel.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { returnOrignal: false }
+    );
+    res.status(200).send({
+      success: true,
+      message: "User has been updated",
+      user,
+    });
+
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in Update API",
+      error,
+    });
+  }
+}
