@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import { connectDb } from "./config/db.js";
+import userRoutes from './routes/userRoutes.js'
 
 // dotenv
 dotenv.config();
@@ -20,6 +21,8 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // routes 
+app.use('/api/v1/user', userRoutes);
+
 app.get("/", (req, res) => {
     res.status(200).send("<h1> Welcome to car server </h1>");
 });
@@ -30,7 +33,7 @@ process.env.PORT || 8080;
 // listen
 app.listen(PORT, () => {
     console.log(
-        `Server Running on Port ${PORT} in ${process.env.DEV_MODE} Mode`
+        `Server Running on Port ${PORT} in ${process.env.DEV_MODE} Mode`.bgBlue
     );
 }) 
 
