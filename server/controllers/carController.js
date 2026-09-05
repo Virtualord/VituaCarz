@@ -27,7 +27,6 @@ export const addCar = async (req, res) => {
             !fuel ||
             !category ||
             !price ||
-            !image ||
             !model
         ) {
             return res.status(400).send({
@@ -36,6 +35,15 @@ export const addCar = async (req, res) => {
             });
         }
 
+        // Image validation
+        if (!req.file) {
+            return res
+            .status(404)
+            .send({ success: false,
+                message: "Please add image file"
+            });
+        }
+        const photoBase64 = req.file.buffer.toString("base64");
         const car = new carModel({
             name,
             about,
@@ -45,7 +53,7 @@ export const addCar = async (req, res) => {
             fuel,
             category,
             price,
-            image,
+            image: photoBase64,
             status,
             transmission,
             model
