@@ -6,6 +6,7 @@ import dotenv from 'dotenv'
 import { connectDb } from "./config/db.js";
 import userRoutes from './routes/userRoutes.js'
 import carRoute from './routes/carRoute.js'
+import bookingRoute from './routes/bookingRoute.js'
 
 // dotenv
 dotenv.config();
@@ -22,8 +23,9 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // routes 
-app.use('/api/v1/user', userRoutes);
-app.use('/api/v1/car', carRoute);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/car", carRoute);
+app.use("/api/v1/booking", bookingRoute)
 
 app.get("/", (req, res) => {
     res.status(200).send("<h1> Welcome to car server </h1>");
