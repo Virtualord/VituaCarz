@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import { Toaster } from "react-hot-toast"; 
 import CarDetails from './pages/Car/CarDetails';
+import Profile from './pages/user/Profile';
 function App() {
 
   return (
@@ -20,12 +21,14 @@ function App() {
         <Route path='/' element={<Home />} />
         <Route path='/about' element={<About />} />
         <Route path='/contact' element={<Contact />} />
-        {/* cars */}
+        {/* Auth */}
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
         {/* cars */}
         <Route path='/cars' element={<Cars />} />
         <Route path='/cars/:id' element={<CarDetails />} />
+        {/* user */}
+        <Route path='/profile' element={<Profile />} />
       </Routes>
       <Footer />
     </>

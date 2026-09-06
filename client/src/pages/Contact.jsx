@@ -65,7 +65,7 @@ const Contact = () => {
               </p>
 
               <p className="mt-1 font-medium text-[#ececec]">
-                help@carrentalapp.com
+                adityapatkar81@gmail.com
               </p>
             </div>
 
