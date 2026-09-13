@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
-import CarsData from "../../Data/carsData.json";
 import toast from "react-hot-toast";
 import BookingModal from "../../components/BookingModal";
+import { useDispatch, useSelector } from "react-redux";
+import { getCarDetails } from "../../store/features/carSlice";
 
 const CarDetails = () => {
   const { id } = useParams();
 
-  const [carDetails, setCarDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
+
+  const { carDetail: carDetails, loading, error } = useSelector((state) => state.cars);
+  const dispatch = useDispatch();
 
   const today = new Date().toISOString().split("T")[0];
 
   const [pickupDate, setPickupDate] = useState(today);
   const [returnDate, setReturnDate] = useState(today);
+
+  useEffect(() => {
+    if (id) {
+      dispatch(getCarDetails(id));
+    }
+  }, [id, dispatch]);
 
   // Booking function
   const handleBooking = () => {
@@ -29,30 +37,17 @@ const CarDetails = () => {
     }
 
     toast.success(`${carDetails.name} booked successfully!`);
-
     setShow(false);
   };
 
-  useEffect(() => {
-    const getCarInfo = () => {
-      try {
-        setLoading(true);
-
-        const carInfo = CarsData.find(
-          (car) => car.id === Number(id)
-        );
-
-        setCarDetails(carInfo || null);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load car details");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getCarInfo();
-  }, [id]);
+  // Resolve image source - backend stores images as base64 strings
+  const getImageSrc = (image) => {
+    if (!image) return null;
+    // If already a URL (http/https or data URI), return as-is
+    if (image.startsWith("http") || image.startsWith("data:")) return image;
+    // Otherwise it's a raw base64 string from the backend
+    return `data:image/jpeg;base64,${image}`;
+  };
 
   // Loading State
   if (loading) {
@@ -60,10 +55,25 @@ const CarDetails = () => {
       <section className="flex min-h-[80vh] items-center justify-center bg-[#212121]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#525252] border-t-[#ececec]" />
+          <p className="text-sm text-[#a3a3a3]">Loading car details...</p>
+        </div>
+      </section>
+    );
+  }
 
-          <p className="text-sm text-[#a3a3a3]">
-            Loading car details...
-          </p>
+  // Error state
+  if (error) {
+    return (
+      <section className="flex min-h-[80vh] items-center justify-center bg-[#212121] px-4">
+        <div className="max-w-md rounded-2xl border border-red-800 bg-red-950 p-8 text-center">
+          <h2 className="text-xl font-semibold text-red-400">Failed to load car</h2>
+          <p className="mt-2 text-sm text-red-300">{error}</p>
+          <Link
+            to="/cars"
+            className="mt-6 inline-block rounded-xl bg-[#ececec] px-5 py-2.5 text-sm font-semibold text-[#171717] transition hover:bg-[#d4d4d4]"
+          >
+            Browse Cars
+          </Link>
         </div>
       </section>
     );
@@ -74,14 +84,10 @@ const CarDetails = () => {
     return (
       <section className="flex min-h-[80vh] items-center justify-center bg-[#212121] px-4">
         <div className="max-w-md rounded-2xl border border-[#3f3f3f] bg-[#2f2f2f] p-8 text-center">
-          <h2 className="text-2xl font-semibold text-[#ececec]">
-            Car not found
-          </h2>
-
+          <h2 className="text-2xl font-semibold text-[#ececec]">Car not found</h2>
           <p className="mt-3 text-sm text-[#a3a3a3]">
             The car you're looking for doesn't exist or may have been removed.
           </p>
-
           <Link
             to="/cars"
             className="mt-6 inline-block rounded-xl bg-[#ececec] px-5 py-2.5 text-sm font-semibold text-[#171717] transition hover:bg-[#d4d4d4]"
@@ -127,11 +133,10 @@ const CarDetails = () => {
             {/* Car Image */}
             <div className="relative min-h-[300px] bg-[#171717] md:min-h-[600px]">
               <img
-                src={carDetails.image}
+                src={getImageSrc(carDetails.image)}
                 alt={carDetails.name}
                 className="h-full w-full object-cover"
               />
-
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             </div>
 
@@ -143,7 +148,6 @@ const CarDetails = () => {
                 <p className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-[#737373]">
                   Vehicle Details
                 </p>
-
                 <h1 className="text-3xl font-bold tracking-tight text-[#f5f5f5] sm:text-4xl">
                   {carDetails.name}
                 </h1>
@@ -152,16 +156,13 @@ const CarDetails = () => {
               <div className="my-6 h-px bg-[#3f3f3f]" />
 
               {/* Description */}
-              <p className="leading-7 text-[#b4b4b4]">
-                {carDetails.about}
-              </p>
+              <p className="leading-7 text-[#b4b4b4]">{carDetails.about}</p>
 
               {/* Specifications */}
               <div className="mt-8">
                 <h2 className="mb-4 text-lg font-semibold text-[#ececec]">
                   Specifications
                 </h2>
-
                 <div className="overflow-hidden rounded-xl border border-[#3f3f3f]">
                   {specifications.map((spec, index) => (
                     <div
@@ -172,10 +173,7 @@ const CarDetails = () => {
                           : ""
                       }`}
                     >
-                      <span className="text-[#a3a3a3]">
-                        {spec.label}
-                      </span>
-
+                      <span className="text-[#a3a3a3]">{spec.label}</span>
                       <span className="font-medium text-[#ececec]">
                         {spec.value || "N/A"}
                       </span>
@@ -186,15 +184,10 @@ const CarDetails = () => {
 
               {/* Price */}
               <div className="mt-6 rounded-xl border border-[#3f3f3f] bg-[#212121] p-4">
-                <p className="text-sm text-[#a3a3a3]">
-                  Rental Price
-                </p>
-
+                <p className="text-sm text-[#a3a3a3]">Rental Price</p>
                 <p className="mt-1 text-2xl font-bold text-[#f5f5f5]">
                   ₹{carDetails.price}
-                  <span className="ml-1 text-sm font-normal text-[#737373]">
-                    / day
-                  </span>
+                  <span className="ml-1 text-sm font-normal text-[#737373]">/ day</span>
                 </p>
               </div>
 
@@ -206,7 +199,6 @@ const CarDetails = () => {
                 >
                   Book this car
                 </button>
-
                 <Link
                   to="/contact"
                   className="flex-1 rounded-xl border border-[#525252] px-6 py-3 text-center text-sm font-medium text-[#ececec] transition hover:bg-[#383838]"

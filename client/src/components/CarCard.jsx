@@ -1,9 +1,15 @@
 import { Link } from "react-router";
 
+const getImageSrc = (image) => {
+  if (!image) return null;
+  if (image.startsWith("http") || image.startsWith("data:")) return image;
+  return `data:image/jpeg;base64,${image}`;
+};
+
 const CarCard = ({ car }) => {
   return (
     <Link
-      to={`/cars/${car?.id}`}
+      to={`/cars/${car?._id}`}
       className="group block w-full max-w-sm"
     >
       <article className="m-2 overflow-hidden rounded-2xl border border-[#3f3f3f] bg-[#2f2f2f] shadow-lg transition duration-300 hover:-translate-y-1 hover:border-[#525252] hover:shadow-2xl">
@@ -11,7 +17,7 @@ const CarCard = ({ car }) => {
         {/* Car Image */}
         <div className="relative h-52 w-full overflow-hidden bg-[#171717]">
           <img
-            src={car?.image}
+            src={getImageSrc(car?.image)}
             alt={car?.name || "Car"}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />

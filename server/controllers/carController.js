@@ -181,7 +181,7 @@ export const deleteCar = async (req, res) => {
         console.log(error);
         res.status(500).send({
             success: false,
-            message: "Error in car Deletion API".
+            message: "Error in car Deletion API",
             error,
         });
     }

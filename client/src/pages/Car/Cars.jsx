@@ -1,11 +1,19 @@
-import React from "react";
-import CarsData from "../../Data/carsData.json";
+import React, { useEffect } from "react";
 import CarCard from "../../components/CarCard";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllCars } from "../../store/features/carSlice";
 
 const Cars = () => {
+  const dispatch = useDispatch();
+  const { cars, loading, error } = useSelector((state) => state.cars);
+
+  useEffect(() => {
+    dispatch(getAllCars());
+  }, [dispatch]);
+
   return (
     <section className="min-h-[80vh] bg-[#212121] px-4 py-12 sm:px-6 lg:px-8">
-      
+
       {/* Page Header */}
       <div className="mx-auto mb-12 max-w-2xl text-center">
         <p className="mb-3 text-xs font-medium uppercase tracking-[0.25em] text-[#737373]">
@@ -25,20 +33,35 @@ const Cars = () => {
       {/* Divider */}
       <div className="mx-auto mb-10 h-px max-w-6xl bg-[#3f3f3f]" />
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center mt-10">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#525252] border-t-[#ececec]" />
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="mx-auto mt-10 max-w-md rounded-2xl border border-red-800 bg-red-950 p-6 text-center">
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
+
       {/* Cars Grid */}
-      <div className="mx-auto grid max-w-6xl grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {CarsData.map((car) => (
-          <CarCard key={car.id} car={car} />
-        ))}
-      </div>
+      {!loading && !error && (
+        <div className="mx-auto grid max-w-6xl grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {cars.map((car) => (
+            <CarCard key={car._id} car={car} />
+          ))}
+        </div>
+      )}
 
       {/* Empty State */}
-      {CarsData.length === 0 && (
+      {!loading && !error && cars.length === 0 && (
         <div className="mx-auto mt-10 max-w-md rounded-2xl border border-[#3f3f3f] bg-[#2f2f2f] p-8 text-center">
           <h2 className="text-xl font-semibold text-[#ececec]">
             No cars available
           </h2>
-
           <p className="mt-2 text-sm text-[#a3a3a3]">
             Check back later for new vehicles.
           </p>
