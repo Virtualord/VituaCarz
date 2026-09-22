@@ -1,8 +1,23 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { logout } from "../store/features/authSlice";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { token, user } = useSelector((state) => state.auth);
+  const isLoggedIn = Boolean(token || user);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    toast.success("Logout successfully");
+    setIsOpen(false);
+    navigate("/login");
+  };
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -40,19 +55,31 @@ const Header = () => {
 
           <div className="mx-2 h-5 w-px bg-[#424242]"></div>
 
-          <Link
-            to="/login"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-[#b4b4b4] transition hover:bg-[#2f2f2f] hover:text-[#ececec]"
-          >
-            Log in
-          </Link>
+          {isLoggedIn ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="ml-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 active:scale-95"
+            >
+              Logout
+            </button>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-[#b4b4b4] transition hover:bg-[#2f2f2f] hover:text-[#ececec]"
+              >
+                Log in
+              </Link>
 
-          <Link
-            to="/register"
-            className="ml-1 rounded-lg bg-[#ececec] px-4 py-2 text-sm font-semibold text-[#212121] transition hover:bg-[#d4d4d4] active:scale-95"
-          >
-            Sign up
-          </Link>
+              <Link
+                to="/register"
+                className="ml-1 rounded-lg bg-[#ececec] px-4 py-2 text-sm font-semibold text-[#212121] transition hover:bg-[#d4d4d4] active:scale-95"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Mobile Hamburger */}
@@ -112,21 +139,33 @@ const Header = () => {
 
             <div className="my-2 border-t border-[#3f3f3f]"></div>
 
-            <Link
-              to="/login"
-              onClick={() => setIsOpen(false)}
-              className="rounded-lg px-4 py-3 text-sm font-medium text-[#b4b4b4] transition hover:bg-[#2f2f2f] hover:text-[#ececec]"
-            >
-              Log in
-            </Link>
+            {isLoggedIn ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-red-700 active:scale-95"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-lg px-4 py-3 text-sm font-medium text-[#b4b4b4] transition hover:bg-[#2f2f2f] hover:text-[#ececec]"
+                >
+                  Log in
+                </Link>
 
-            <Link
-              to="/register"
-              onClick={() => setIsOpen(false)}
-              className="rounded-lg bg-[#ececec] px-4 py-3 text-center text-sm font-semibold text-[#212121] transition hover:bg-[#d4d4d4]"
-            >
-              Sign up
-            </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-lg bg-[#ececec] px-4 py-3 text-center text-sm font-semibold text-[#212121] transition hover:bg-[#d4d4d4]"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
 
           </div>
         </nav>

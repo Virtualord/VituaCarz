@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
+import { register } from "../../store/features/authSlice";
 
 const Register = () => {
   const [uname, setUname] = useState("");
@@ -9,32 +11,49 @@ const Register = () => {
   const [phone, setPhone] = useState("");
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleSubmit = (e) => {
+  const { loading, token } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (token) {
+      navigate("/");
+    }
+  }, [token, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      if (!uname.trim() || !email.trim() || !password.trim() || !phone.trim()) {
-        return toast.error("Please provide all fields");
-      }
+    if (
+      !uname.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !phone.trim()
+    ) {
+      toast.error("Please provide all fields");
+      return;
+    }
 
-      console.log({
-        username: uname,
-        email,
-        phone,
-      });
+    try {
+      await dispatch(
+        register({
+          uname: uname.trim(),
+          email: email.trim(),
+          password,
+          phone: phone.trim(),
+        })
+      ).unwrap();
+
+      toast.success("Registration successful!");
 
       setUname("");
       setEmail("");
       setPassword("");
       setPhone("");
 
-      toast.success("Registration successful!");
       navigate("/login");
-
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
+      toast.error(error || "Registration failed");
     }
   };
 
@@ -42,7 +61,6 @@ const Register = () => {
     <section className="min-h-screen bg-[#171717] px-4 py-10">
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
 
-        {/* Registration Card */}
         <div className="rounded-3xl border border-[#3f3f3f] bg-[#262626] p-8 shadow-2xl md:p-12">
 
           <h1 className="mb-3 text-center text-3xl font-bold tracking-tight text-[#f5f5f5] md:text-4xl">
@@ -55,7 +73,6 @@ const Register = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Name */}
             <div>
               <label className="mb-2 block text-sm font-medium text-[#e5e5e5]">
                 Full Name
@@ -70,7 +87,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label className="mb-2 block text-sm font-medium text-[#e5e5e5]">
                 Email Address
@@ -85,7 +101,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="mb-2 block text-sm font-medium text-[#e5e5e5]">
                 Password
@@ -100,7 +115,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Phone */}
             <div>
               <label className="mb-2 block text-sm font-medium text-[#e5e5e5]">
                 Phone Number
@@ -115,17 +129,16 @@ const Register = () => {
               />
             </div>
 
-            {/* Register Button */}
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#f5f5f5] py-3 font-semibold text-[#171717] transition duration-200 hover:bg-[#d4d4d4] hover:shadow-lg active:scale-[0.98]"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#f5f5f5] py-3 font-semibold text-[#171717] transition duration-200 hover:bg-[#d4d4d4] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Account
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
 
           </form>
 
-          {/* Login Link */}
           <p className="mt-6 text-center text-sm text-[#a3a3a3]">
             Already have an account?{" "}
             <span
@@ -138,7 +151,6 @@ const Register = () => {
 
         </div>
 
-        {/* Image Section */}
         <div className="hidden justify-center md:flex">
           <img
             src="https://play-lh.googleusercontent.com/VbmpdCXIy-jLT1Rvxu3uW6pUZkhwGcesWzR9_hIrMFzIAW3rFyAES8oVY73dotu6D5Y21YU3_RF9Vxyb4n6Ab0o"

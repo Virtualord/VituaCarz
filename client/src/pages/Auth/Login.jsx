@@ -1,34 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
+import { login } from "../../store/features/authSlice";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { loading, token } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (token) {
+      navigate("/");
+    }
+  }, [token, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!email.trim() || !password.trim()) {
+      toast.error("Please provide email and password");
+      return;
+    }
+
     try {
-      if (!email.trim() || !password.trim()) {
-        return toast.error("Please provide all fields");
-      }
+      await dispatch(
+        login({
+          email: email.trim(),
+          password,
+        })
+      ).unwrap();
 
-      console.log({
-        password,
-        email,
-      });
-
+      // Clear form
       setEmail("");
       setPassword("");
 
       toast.success("Login successful!");
-      navigate("/cars");
 
+      // Navigate after successful login
+      navigate("/cars");
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
+      toast.error(error || "Login failed");
     }
   };
 
@@ -82,9 +98,10 @@ const Login = () => {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#f5f5f5] py-3 font-semibold text-[#171717] transition duration-200 hover:bg-[#d4d4d4] hover:shadow-lg active:scale-[0.98]"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#f5f5f5] py-3 font-semibold text-[#171717] transition duration-200 hover:bg-[#d4d4d4] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
 
           </form>
@@ -106,7 +123,7 @@ const Login = () => {
         <div className="hidden justify-center md:flex">
           <img
             src="https://play-lh.googleusercontent.com/VbmpdCXIy-jLT1Rvxu3uW6pUZkhwGcesWzR9_hIrMFzIAW3rFyAES8oVY73dotu6D5Y21YU3_RF9Vxyb4n6Ab0o"
-            alt="Registration"
+            alt="Login"
             className="w-full max-w-md rounded-3xl border border-[#3f3f3f] object-cover shadow-2xl grayscale transition duration-500 hover:scale-[1.02] hover:grayscale-0"
           />
         </div>

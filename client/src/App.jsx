@@ -11,7 +11,16 @@ import Header from './components/Header';
 import { Toaster } from "react-hot-toast"; 
 import CarDetails from './pages/Car/CarDetails';
 import Profile from './pages/user/Profile';
+import { useDispatch, useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { loadToken } from './store/features/authSlice';
 function App() {
+  const dispatch = useDispatch();
+  const { token } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(loadToken());
+  }, [dispatch]);
 
   return (
     <>
