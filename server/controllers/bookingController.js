@@ -118,42 +118,97 @@ export const updateBookingStatus = async (req, res) => {
     }
 }
 
+// User update booking dates (adds ₹200 penalty)
+export const updateBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(404).send({
+                success: false,
+                message: "Please provide booking id",
+            });
+        }
+
+        const { startDate, returnDate } = req.body;
+        if (!startDate || !returnDate) {
+            return res.status(400).send({
+                success: false,
+                message: "Please provide startDate and returnDate",
+            });
+        }
+
+        if (new Date(returnDate) < new Date(startDate)) {
+            return res.status(400).send({
+                success: false,
+                message: "Return date cannot be before start date",
+            });
+        }
+
+        const existing = await bookingModel.findById(id);
+        if (!existing) {
+            return res.status(404).send({
+                success: false,
+                message: "Booking not found",
+            });
+        }
+
+        const PENALTY = 200;
+        const updatedTotalPrice = existing.totalPrice + PENALTY;
+
+        const booking = await bookingModel.findByIdAndUpdate(
+            id,
+            { $set: { startDate, returnDate, totalPrice: updatedTotalPrice } },
+            { returnDocument: "after" }
+        );
+
+        res.status(200).send({
+            success: true,
+            message: "Booking updated successfully. ₹200 penalty applied.",
+            booking,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: "Error in update booking API",
+            error,
+        });
+    }
+};
+
 // User bookings
 export const getUserBooking = async (req, res) => {
     try {
         const { id } = req.params;
         if (!id) {
-            return res
-            .status(404)
-            .send({ 
+            return res.status(404).send({ 
                 success: false, 
-                message: "Please provide booking id"
+                message: "Please provide user id"
             });
         }
-        const user = await userModel.findById({_id:id})
-        // Booking
-        const booking = await bookingModel.find({user: user._id})
-        if (!booking) {
-            return res
-            .status(404)
-            .send({ 
-                success: false, 
-                message: "No Booking found"
+        
+        const user = await userModel.findById(id);
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: "User not found"
             });
         }
-        const car = await carModel.find({_id:booking[0].car})
+
+        const booking = await bookingModel.find({ user: user._id }).populate("car", "name image price");
+        
         res.status(200).send({
             success: true,
             message: "Your Bookings",
             totalBooking: booking.length,
             booking,
-        })
+        });
     } catch (error) {
         console.log(error);
         res.status(500).send({
             success: false,
-            message: "Error in booking update API",
+            message: "Error in get user bookings API",
             error,
-        })
+        });
     }
-}
+};

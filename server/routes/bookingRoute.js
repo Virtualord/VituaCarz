@@ -1,6 +1,6 @@
 import express from "express";
 import { isAdmin, userAuth } from "../middleware/authMiddleware.js";
-import { createBooking, getAllBookings, getBookingDetails, updateBookingStatus, getUserBooking } from "../controllers/bookingController.js";
+import { createBooking, getAllBookings, getBookingDetails, updateBookingStatus, getUserBooking, updateBooking } from "../controllers/bookingController.js";
 
 const router = express.Router();
 
@@ -18,5 +18,8 @@ router.patch("/update-status/:id", userAuth, isAdmin, updateBookingStatus)
 
 // Get user booking || GET
 router.get("/user-booking/:id", userAuth, getUserBooking)
+
+// Update booking dates (user) || PATCH
+router.patch("/update/:id", userAuth, updateBooking)
 
 export default router;

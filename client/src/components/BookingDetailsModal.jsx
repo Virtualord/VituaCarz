@@ -7,8 +7,13 @@ const BookingDetailsModal = ({
 }) => {
   if (!booking) return null;
 
+  // Resolve field names – backend uses startDate, car is populated with name/image/price
+  const carName = booking.car?.name || "N/A";
+  const carImage = booking.car?.image || "";
+  const pricePerDay = booking.car?.price || booking.price;
+
   // Calculate rental duration
-  const pickup = new Date(booking.pickupDate);
+  const pickup = new Date(booking.startDate);
   const returnDate = new Date(booking.returnDate);
 
   const rentalDays = Math.max(
@@ -18,7 +23,7 @@ const BookingDetailsModal = ({
     )
   );
 
-  const totalPrice = rentalDays * booking.price;
+  const totalPrice = booking.totalPrice || rentalDays * pricePerDay;
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-IN", {
@@ -50,7 +55,7 @@ const BookingDetailsModal = ({
             </p>
 
             <h2 className="mt-1 text-xl font-semibold text-[#f5f5f5]">
-              {booking.carName}
+              {carName}
             </h2>
           </div>
 
@@ -71,18 +76,18 @@ const BookingDetailsModal = ({
           {/* Car Preview */}
           <div className="flex items-center gap-4 rounded-xl border border-[#3f3f3f] bg-[#212121] p-3">
             <img
-              src={booking.carImage}
-              alt={booking.carName}
+              src={carImage}
+              alt={carName}
               className="h-20 w-28 rounded-lg object-cover"
             />
 
             <div>
               <h3 className="font-medium text-[#ececec]">
-                {booking.carName}
+                {carName}
               </h3>
 
               <p className="mt-1 text-sm text-[#a3a3a3]">
-                ₹{booking.price} / day
+                ₹{pricePerDay} / day
               </p>
             </div>
           </div>

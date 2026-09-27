@@ -69,6 +69,47 @@ export const updateUser = createAsyncThunk(
   }
 );
 
+// USER Booking
+export const getUserBookings = createAsyncThunk(
+  "auth/getUserBooking",
+  async ({ id }, thunkApi) => {
+    try {
+      const token = thunkApi.getState().auth.token;
+      const res = await API.get(`/booking/user-booking/${id}`, {
+        headers: { Authorization: token },
+      });
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Error in user booking from redux";
+
+      return thunkApi.rejectWithValue(message);
+    }
+  }
+);
+
+// Update Booking dates
+export const updateBooking = createAsyncThunk(
+  "auth/updateBooking",
+  async ({ id, startDate, returnDate }, thunkApi) => {
+    try {
+      const token = thunkApi.getState().auth.token;
+      const res = await API.patch(`/booking/update/${id}`, { startDate, returnDate }, {
+        headers: { Authorization: token },
+      });
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Error updating booking";
+      return thunkApi.rejectWithValue(message);
+    }
+  }
+);
+
 export const loadToken = createAsyncThunk(
   "auth/loadToken",
   async () => {
@@ -108,6 +149,7 @@ const authSlice = createSlice({
     user: initialAuthData?.user || null,
     token: initialAuthData?.token || null,
     error: null,
+    bookings: null,
   },
 
   reducers: {
@@ -211,6 +253,46 @@ const authSlice = createSlice({
         state.success = false;
         state.error =
           action.payload || "Failed to update user";
+      })
+      // get user bookings
+      .addCase(getUserBookings.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getUserBookings.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.error = null;
+        state.bookings = action.payload.booking;
+      })
+      .addCase(getUserBookings.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.error = action.payload || "Failed to fetch bookings";
+      })
+
+      // Update booking dates
+      .addCase(updateBooking.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(updateBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.error = null;
+        if (state.bookings) {
+          state.bookings = state.bookings.map((b) =>
+            b._id === action.payload.booking._id
+              ? action.payload.booking
+              : b
+          );
+        }
+      })
+      .addCase(updateBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.error = action.payload || "Failed to update booking";
       });
   },
 });

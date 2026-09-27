@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import BookingModal from "../../components/BookingModal";
 import { useDispatch, useSelector } from "react-redux";
 import { getCarDetails } from "../../store/features/carSlice";
+import API from "../../api/API";
 
 const CarDetails = () => {
   const { id } = useParams();
@@ -11,6 +12,7 @@ const CarDetails = () => {
   const [show, setShow] = useState(false);
 
   const { carDetail: carDetails, loading, error } = useSelector((state) => state.cars);
+  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   const today = new Date().toISOString().split("T")[0];
@@ -25,7 +27,12 @@ const CarDetails = () => {
   }, [id, dispatch]);
 
   // Booking function
-  const handleBooking = () => {
+  const handleBooking = async () => {
+    if (!user?._id) {
+      toast.error("Please log in to book a car");
+      return;
+    }
+
     if (!pickupDate || !returnDate) {
       toast.error("Please select pickup and return dates");
       return;
@@ -36,8 +43,28 @@ const CarDetails = () => {
       return;
     }
 
-    toast.success(`${carDetails.name} booked successfully!`);
-    setShow(false);
+    const days = Math.ceil(
+      (new Date(returnDate) - new Date(pickupDate)) / (1000 * 60 * 60 * 24)
+    ) + 1;
+    const totalPrice = days * Number(carDetails.price || 0);
+
+    try {
+      await API.post("/booking/create", {
+        user: user._id,
+        car: carDetails._id,
+        startDate: pickupDate,
+        returnDate,
+        price: carDetails.price,
+        totalPrice,
+      });
+
+      toast.success(`${carDetails.name} booked successfully!`);
+      setShow(false);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to create booking"
+      );
+    }
   };
 
   // Resolve image source - backend stores images as base64 strings

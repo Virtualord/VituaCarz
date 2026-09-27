@@ -1,33 +1,34 @@
-
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 import EditModal from "../../components/EditModal";
 import BookingDetailsModal from "../../components/BookingDetailsModal";
+import EditBookingModal from "../../components/EditBookingModal";
 
 import {
   updateUser,
+  updateBooking,
+  getUserBookings,
   reset,
 } from "../../store/features/authSlice.js";
 
 const Profile = () => {
   const dispatch = useDispatch();
 
-  const { user, loading, error } = useSelector(
-    (state) => state.auth
-  );
+  const { user, loading, bookings } = useSelector((state) => state.auth);
 
   const [editModal, setEditModal] = useState(false);
-  const [bookingDetailsModal, setBookingDetailsModal] =
-    useState(false);
+  const [bookingDetailsModal, setBookingDetailsModal] = useState(false);
+  const [editBookingModal, setEditBookingModal] = useState(false);
 
   const [uname, setUname] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  const [selectedBooking, setSelectedBooking] =
-    useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [startDate, setStartDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
 
   // Sync form when user data is loaded
   useEffect(() => {
@@ -36,6 +37,27 @@ const Profile = () => {
       setPhone(user.phone || "");
     }
   }, [user]);
+
+  // Fetch user bookings
+  useEffect(() => {
+    if (user?._id) {
+      dispatch(getUserBookings({ id: user._id }))
+        .unwrap()
+        .then((data) => {
+          console.log("Bookings fetched successfully:", data);
+          console.log("Bookings array:", data.booking);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch bookings:", err);
+          toast.error("Failed to load bookings");
+        });
+    }
+  }, [user?._id, dispatch]);
+
+  // Debug: log bookings state
+  useEffect(() => {
+    console.log("Bookings state:", bookings);
+  }, [bookings]);
 
   // Reset the form when the edit modal opens
   const handleOpenEditModal = () => {
@@ -60,53 +82,66 @@ const Profile = () => {
       phone: phone.trim(),
     };
 
-    // Send password only when the user enters a new one
     if (password.trim()) {
       updatedUser.password = password;
     }
 
     try {
-      await dispatch(
-        updateUser({
-          id: user._id,
-          updatedUser,
-        })
-      ).unwrap();
-
+      await dispatch(updateUser({ id: user._id, updatedUser })).unwrap();
       toast.success("Profile updated successfully!");
-
       setPassword("");
       setEditModal(false);
-
-      // Fetch latest user details
-      // await dispatch(getUserData()).unwrap();
-
     } catch (err) {
       toast.error(
-        typeof err === "string"
-          ? err
-          : err?.message || "Failed to update profile"
+        typeof err === "string" ? err : err?.message || "Failed to update profile"
       );
     }
   };
 
-  // Example booking data (replace with API data later)
-  const bookings = [
-    {
-      id: 1,
-      carName: "Audi Q7",
-      carImage:
-        "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6",
-      price: 5000,
-      pickupDate: "2026-10-03",
-      returnDate: "2026-10-05",
-      status: "Pending",
-    },
-  ];
-
   const handleViewBooking = (booking) => {
     setSelectedBooking(booking);
     setBookingDetailsModal(true);
+  };
+
+  // Open edit booking modal for a specific booking
+  const handleOpenEditBooking = (booking) => {
+    setSelectedBooking(booking);
+    // Pre-fill with existing dates (format to YYYY-MM-DD)
+    setStartDate(booking.startDate?.split("T")[0] || "");
+    setReturnDate(booking.returnDate?.split("T")[0] || "");
+    dispatch(reset());
+    setEditBookingModal(true);
+  };
+
+  // Update booking dates
+  const handleUpdateBooking = async () => {
+    if (!startDate || !returnDate) {
+      toast.error("Please select both dates");
+      return;
+    }
+
+    if (new Date(returnDate) < new Date(startDate)) {
+      toast.error("Return date cannot be before pickup date");
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateBooking({
+          id: selectedBooking._id,
+          startDate,
+          returnDate,
+        })
+      ).unwrap();
+
+      toast.success("Booking updated! ₹200 penalty applied.");
+      setEditBookingModal(false);
+      setSelectedBooking(null);
+    } catch (err) {
+      toast.error(
+        typeof err === "string" ? err : err?.message || "Failed to update booking"
+      );
+    }
   };
 
   return (
@@ -140,30 +175,21 @@ const Profile = () => {
 
               <div className="mt-5 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="text-sm text-[#737373]">
-                    Name
-                  </span>
-
+                  <span className="text-sm text-[#737373]">Name</span>
                   <span className="text-sm font-medium text-[#ececec]">
                     : {user?.uname || "Not available"}
                   </span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="text-sm text-[#737373]">
-                    Email
-                  </span>
-
+                  <span className="text-sm text-[#737373]">Email</span>
                   <span className="text-sm font-medium text-[#ececec]">
                     : {user?.email || "Not available"}
                   </span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:gap-2">
-                  <span className="text-sm text-[#737373]">
-                    Phone
-                  </span>
-
+                  <span className="text-sm text-[#737373]">Phone</span>
                   <span className="text-sm font-medium text-[#ececec]">
                     : {user?.phone || "Not available"}
                   </span>
@@ -186,16 +212,19 @@ const Profile = () => {
         <div className="mt-8 rounded-2xl border border-[#3f3f3f] bg-[#2f2f2f] shadow-xl">
 
           <div className="border-b border-[#3f3f3f] px-6 py-5 sm:px-8">
-            <h2 className="text-xl font-semibold text-[#ececec]">
-              Your Bookings
-            </h2>
-
-            <p className="mt-1 text-sm text-[#a3a3a3]">
-              View your current and previous car bookings.
-            </p>
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-[#ececec]">
+                  Your Bookings
+                </h2>
+                <p className="mt-1 text-sm text-[#a3a3a3]">
+                  View your current and previous car bookings.
+                </p>
+              </div>
+            </div>
           </div>
 
-          {bookings.length > 0 ? (
+          {bookings?.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[650px] text-left">
 
@@ -204,17 +233,14 @@ const Profile = () => {
                     <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#737373]">
                       Car
                     </th>
-
                     <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#737373]">
                       Journey Date
                     </th>
-
                     <th className="px-6 py-4 text-xs font-medium uppercase tracking-wider text-[#737373]">
                       Status
                     </th>
-
                     <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-[#737373]">
-                      Details
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -222,19 +248,17 @@ const Profile = () => {
                 <tbody>
                   {bookings.map((booking) => (
                     <tr
-                      key={booking.id}
+                      key={booking._id || booking.id}
                       className="border-b border-[#3f3f3f] transition hover:bg-[#383838]"
                     >
                       <td className="px-6 py-5">
                         <span className="font-medium text-[#ececec]">
-                          {booking.carName}
+                          {booking.car?.name || "N/A"}
                         </span>
                       </td>
 
                       <td className="px-6 py-5 text-sm text-[#a3a3a3]">
-                        {new Date(
-                          booking.pickupDate
-                        ).toLocaleDateString("en-IN")}
+                        {new Date(booking.startDate || booking.pickupDate).toLocaleDateString("en-IN")}
                       </td>
 
                       <td className="px-6 py-5">
@@ -244,16 +268,27 @@ const Profile = () => {
                       </td>
 
                       <td className="px-6 py-5 text-right">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleViewBooking(booking)
-                          }
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#a3a3a3] transition hover:bg-[#404040] hover:text-[#ececec]"
-                          aria-label={`View ${booking.carName} booking`}
-                        >
-                          <i className="fa-solid fa-eye" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {/* View */}
+                          <button
+                            type="button"
+                            onClick={() => handleViewBooking(booking)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#a3a3a3] transition hover:bg-[#404040] hover:text-[#ececec]"
+                            aria-label={`View booking`}
+                          >
+                            <i className="fa-solid fa-eye" />
+                          </button>
+
+                          {/* Edit */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditBooking(booking)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#a3a3a3] transition hover:bg-[#404040] hover:text-[#ececec]"
+                            aria-label={`Edit booking`}
+                          >
+                            <i className="fa-solid fa-pen" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -277,7 +312,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Profile Modal */}
       {editModal && (
         <EditModal
           setEditModal={setEditModal}
@@ -297,6 +332,20 @@ const Profile = () => {
         <BookingDetailsModal
           booking={selectedBooking}
           setBookingDetailsModal={setBookingDetailsModal}
+        />
+      )}
+
+      {/* Edit Booking Modal */}
+      {editBookingModal && selectedBooking && (
+        <EditBookingModal
+          booking={selectedBooking}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          returnDate={returnDate}
+          setReturnDate={setReturnDate}
+          handleUpdate={handleUpdateBooking}
+          loading={loading}
+          setEditBookingModal={setEditBookingModal}
         />
       )}
     </section>
