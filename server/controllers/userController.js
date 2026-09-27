@@ -121,12 +121,23 @@ export const updateUser = async (req, res) => {
         message: "User not found"
       })
     }
-    const data = req.body;
+    const data = { ...req.body };
+
+    // Hash password if user is updating it
+    if (data.password) {
+      const salt = await bcrypt.genSalt(10);
+      data.password = await bcrypt.hash(data.password, salt);
+    }
+
     const user = await userModel.findByIdAndUpdate(
       id,
       { $set: data },
-      { returnOrignal: false }
+      { returnDocument: "after" }
     );
+
+    // Don't send password in response
+    user.password = undefined;
+
     res.status(200).send({
       success: true,
       message: "User has been updated",

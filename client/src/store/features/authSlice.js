@@ -47,6 +47,28 @@ export const login = createAsyncThunk(
   }
 );
 
+// UpdateUser
+export const updateUser = createAsyncThunk(
+  "auth/updateUser",
+  async ({ id, updatedUser }, thunkApi) => {
+    try {
+      const token = thunkApi.getState().auth.token;
+      const res = await API.patch(`/user/update/${id}`, updatedUser, {
+        headers: { Authorization: token },
+      });
+
+      return res.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Error updating user";
+
+      return thunkApi.rejectWithValue(message);
+    }
+  }
+);
+
 export const loadToken = createAsyncThunk(
   "auth/loadToken",
   async () => {
@@ -76,6 +98,7 @@ const getInitialAuthData = () => {
 
 const initialAuthData = getInitialAuthData();
 
+
 const authSlice = createSlice({
   name: "auth",
 
@@ -98,6 +121,7 @@ const authSlice = createSlice({
       state.user = null;
       state.success = false;
       state.error = null;
+      state.loading = false;
 
       localStorage.removeItem("appData");
     },
@@ -105,7 +129,6 @@ const authSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-
       // Register
       .addCase(register.pending, (state) => {
         state.loading = true;
@@ -122,7 +145,7 @@ const authSlice = createSlice({
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload;
+        state.error = action.payload || "Registration failed";
       })
 
       // Login
@@ -143,12 +166,51 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload;
+        state.error = action.payload || "Login failed";
       })
 
       // Load token
       .addCase(loadToken.fulfilled, (state, action) => {
         state.token = action.payload;
+      })
+
+      // Update user
+      .addCase(updateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.error = null;
+
+        // Support either { user: {...} } or direct user response
+        const updatedUser =
+          action.payload?.user ?? action.payload;
+
+        state.user = updatedUser;
+
+        // Sync localStorage
+        const appData = JSON.parse(
+          localStorage.getItem("appData") || "{}"
+        );
+
+        localStorage.setItem(
+          "appData",
+          JSON.stringify({
+            ...appData,
+            user: updatedUser,
+          })
+        );
+      })
+
+      .addCase(updateUser.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.error =
+          action.payload || "Failed to update user";
       });
   },
 });
